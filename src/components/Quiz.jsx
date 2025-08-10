@@ -1,5 +1,6 @@
 import { useQuiz } from '../context/QuizContext';
 import Question from './Question';
+import Timer from './Timer';
 
 function Quiz() {
   const { index, answer, dispatch, points, numQuestions, questions } = useQuiz();
@@ -21,6 +22,7 @@ function Quiz() {
       <Question question={questions[index]} />
 
       <footer className="footer">
+        <Timer /> 
         {hasAnswered && (
           <button
             className="btn btn-ui"

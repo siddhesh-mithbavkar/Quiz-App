@@ -1,15 +1,19 @@
 import { createContext, useContext, useReducer, useEffect } from "react";
+// FIX 1: We rename the imported data to 'questionsData' to avoid conflicts.
 import questionsData from "../assets/questions";
 
 const QuizContext = createContext();
 
+const SECS_PER_QUESTION = 30;
+
 const initialState = {
   questions: [],
-  status: "loading",
+  status: "loading", // 'loading', 'ready', 'active', 'finished'
   index: 0,
   answer: null,
   points: 0,
   highscore: 0,
+  secondsRemaining: null,
 };
 
 function reducer(state, action) {
@@ -19,7 +23,11 @@ function reducer(state, action) {
     case "dataFailed":
       return { ...state, status: "error" };
     case "start":
-      return { ...state, status: "active" };
+      return {
+        ...state,
+        status: "active",
+        secondsRemaining: state.questions.length * SECS_PER_QUESTION,
+      };
     case "newAnswer":
       const question = state.questions.at(state.index);
       return {
@@ -42,9 +50,15 @@ function reducer(state, action) {
     case "restart":
       return {
         ...initialState,
-        questions: state.questions,
+        questions: state.questions, // Keep existing questions
         status: "ready",
-        highscore: state.highscore,
+        highscore: state.highscore, // Keep existing highscore
+      };
+    case "tick":
+      return {
+        ...state,
+        secondsRemaining: state.secondsRemaining - 1,
+        status: state.secondsRemaining === 0 ? "finished" : state.status,
       };
     default:
       throw new Error("Action unknown");
@@ -52,8 +66,10 @@ function reducer(state, action) {
 }
 
 function QuizProvider({ children }) {
-  const [{ status, index, answer, points, highscore, questions }, dispatch] =
-    useReducer(reducer, initialState);
+  const [
+    { status, index, answer, points, highscore, questions, secondsRemaining },
+    dispatch,
+  ] = useReducer(reducer, initialState);
 
   const numQuestions = questions.length;
   const maxPossiblePoints = questions.reduce(
@@ -62,6 +78,7 @@ function QuizProvider({ children }) {
   );
 
   useEffect(function () {
+    // FIX 2: We use the correctly named 'questionsData' to load the questions.
     if (questionsData) {
       dispatch({ type: "dataReceived", payload: questionsData });
     } else {
@@ -80,6 +97,7 @@ function QuizProvider({ children }) {
         questions,
         numQuestions,
         maxPossiblePoints,
+        secondsRemaining,
         dispatch,
       }}
     >

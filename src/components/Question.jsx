@@ -3,7 +3,6 @@ import { useQuiz } from '../context/QuizContext';
 function Question({ question }) {
   const { dispatch, answer } = useQuiz();
 
-  // Guard clause to prevent crash if question is not yet loaded
   if (!question) {
     return null;
   }
